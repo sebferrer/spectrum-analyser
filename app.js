@@ -55,17 +55,17 @@
     // These are the exact stops from the reference getFullColor()
     // mapped at 0%, 10%, 20%, ... 100% of value range
     const palette = [
-      [0,   0,   0  ],  //   0% — black
-      [75,  0,   159],  //  10% — purple
-      [104, 0,   251],  //  20% — blue-purple
-      [131, 0,   255],  //  30% — violet-blue
-      [155, 18,  157],  //  40% — purple-red
-      [175, 37,  0  ],  //  50% — dark brown
-      [191, 59,  0  ],  //  60% — dark orange
-      [206, 88,  0  ],  //  70% — orange
-      [223, 132, 0  ],  //  80% — amber
-      [240, 188, 0  ],  //  90% — yellow-orange
-      [255, 252, 0  ],  // 100% — bright yellow
+      [0, 0, 0],  //   0% — black
+      [75, 0, 159],  //  10% — purple
+      [104, 0, 251],  //  20% — blue-purple
+      [131, 0, 255],  //  30% — violet-blue
+      [155, 18, 157],  //  40% — purple-red
+      [175, 37, 0],  //  50% — dark brown
+      [191, 59, 0],  //  60% — dark orange
+      [206, 88, 0],  //  70% — orange
+      [223, 132, 0],  //  80% — amber
+      [240, 188, 0],  //  90% — yellow-orange
+      [255, 252, 0],  // 100% — bright yellow
     ];
     const map = new Uint8Array(256 * 3);
     for (let i = 0; i < 256; i++) {
@@ -75,7 +75,7 @@
       const frac = (pct - stopIdx * 10) / 10;
       const a = palette[stopIdx];
       const b = palette[stopIdx + 1];
-      map[i * 3]     = Math.round(a[0] + (b[0] - a[0]) * frac);
+      map[i * 3] = Math.round(a[0] + (b[0] - a[0]) * frac);
       map[i * 3 + 1] = Math.round(a[1] + (b[1] - a[1]) * frac);
       map[i * 3 + 2] = Math.round(a[2] + (b[2] - a[2]) * frac);
     }
@@ -212,7 +212,7 @@
     playIcon.classList.add('hidden');
     pauseIcon.classList.remove('hidden');
 
-    clearSpectrogram();
+    // clearSpectrogram();
     drawLoop();
   }
 
@@ -272,7 +272,7 @@
     if (!audioBuffer) return;
     const pct = parseFloat(e.target.value);
     const seekTime = (pct / 100) * audioBuffer.duration;
-    
+
     // Only update UI while dragging
     updateTimeDisplay(seekTime, audioBuffer.duration);
     progressFill.style.width = pct + '%';
@@ -305,7 +305,7 @@
   gridRadios.forEach((radio) => {
     radio.addEventListener('change', () => {
       showGrid = radio.value === 'on';
-      gridIndicator.classList.toggle('grid-off', !showGrid); 
+      gridIndicator.classList.toggle('grid-off', !showGrid);
       drawAxes();
     });
   });
@@ -324,7 +324,7 @@
     if (!audioCtx) return;
     const rect = spectrogramCanvas.getBoundingClientRect();
     const y = e.clientY - rect.top;
-    
+
     // Make sure we're within bounds
     if (y < 0 || y > rect.height) {
       tooltip.classList.add('hidden');
@@ -333,8 +333,8 @@
 
     const nyquist = audioCtx.sampleRate / 2;
     const freq = yToFreq(y, rect.height, nyquist);
-    
-    let displayFreq = freq >= 1000 
+
+    let displayFreq = freq >= 1000
       ? (freq / 1000).toFixed(1) + ' kHz'
       : Math.round(freq) + ' Hz';
 
@@ -486,7 +486,7 @@
     const elapsed = audioCtx.currentTime - startTime;
     if (elapsed >= audioBuffer.duration) {
       // Allow it to naturally stop
-      return; 
+      return;
     }
 
     // Update time & progress ONLY if not currently scrubbing
