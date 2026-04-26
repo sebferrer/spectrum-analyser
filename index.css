@@ -293,6 +293,56 @@ body {
   color: var(--accent-primary);
 }
 
+.audio-input-row {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+
+.upload-zone {
+  flex: 1;
+}
+
+.demo-select-wrapper {
+  position: relative;
+  flex: 1;
+}
+
+.demo-select {
+  width: 100%;
+  height: 100%;
+  padding: 8px 32px 8px 12px;
+  background: var(--bg-tertiary);
+  border: 1.5px solid var(--border-color);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  transition: all var(--transition-base);
+}
+
+.demo-select:hover {
+  border-color: var(--accent-primary);
+}
+
+.demo-select:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+  box-shadow: var(--shadow-glow);
+}
+
+.select-icon {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  color: var(--text-secondary);
+}
+
 .scale-toggle {
   display: flex;
   position: relative;
@@ -398,6 +448,51 @@ body {
   font-size: 0.8125rem;
   color: var(--text-muted);
   min-width: 90px;
+}
+
+.volume-control {
+  display: flex;
+  align-items: center;
+  height: 40px;
+}
+
+.volume-slider {
+  width: 100%;
+  -webkit-appearance: none;
+  appearance: none;
+  background: var(--bg-tertiary);
+  height: 6px;
+  border-radius: 3px;
+  outline: none;
+  cursor: pointer;
+}
+
+.volume-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--accent-primary);
+  box-shadow: var(--shadow-sm);
+  transition: transform var(--transition-fast);
+}
+
+.volume-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+}
+
+.volume-slider::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--accent-primary);
+  border: none;
+  box-shadow: var(--shadow-sm);
+  transition: transform var(--transition-fast);
+}
+
+.volume-slider::-moz-range-thumb:hover {
+  transform: scale(1.2);
 }
 
 .hidden { display: none !important; }

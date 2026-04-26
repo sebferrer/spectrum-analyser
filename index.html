@@ -51,16 +51,30 @@
               </svg>
               Audio File
             </label>
-            <div class="upload-zone" id="upload-zone">
-              <input type="file" id="audio-upload" accept="audio/*" hidden>
-              <button class="upload-btn" id="upload-btn">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                  <polyline points="17 8 12 3 7 8"/>
-                  <line x1="12" y1="3" x2="12" y2="15"/>
+            <div class="audio-input-row">
+              <div class="upload-zone" id="upload-zone">
+                <input type="file" id="audio-upload" accept="audio/*" hidden>
+                <button class="upload-btn" id="upload-btn">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="17 8 12 3 7 8"/>
+                    <line x1="12" y1="3" x2="12" y2="15"/>
+                  </svg>
+                  <span id="upload-text">Choose file</span>
+                </button>
+              </div>
+              <div class="demo-select-wrapper">
+                <select id="demo-select" class="demo-select">
+                  <option value="" disabled selected>Or choose a demo...</option>
+                  <option value="sound/white_noise.wav">White Noise</option>
+                  <option value="sound/white_noise_lowpass.wav">White Noise Lowpass</option>
+                  <option value="sound/pink_noise.wav">Pink Noise</option>
+                  <option value="sound/brown_noise.wav">Brown Noise</option>
+                </select>
+                <svg class="select-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="6 9 12 15 18 9"/>
                 </svg>
-                <span id="upload-text">Choose file or drag &amp; drop</span>
-              </button>
+              </div>
             </div>
           </div>
 
@@ -158,6 +172,21 @@
                 </svg>
               </button>
               <span class="time-display" id="time-display">0:00 / 0:00</span>
+            </div>
+          </div>
+
+          <!-- Volume Control -->
+          <div class="control-group">
+            <label class="control-label">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+                <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+                <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+              </svg>
+              Volume
+            </label>
+            <div class="volume-control">
+              <input type="range" id="volume-input" class="volume-slider" min="0" max="1" step="0.01" value="0.8">
             </div>
           </div>
         </div>

@@ -5,6 +5,7 @@
   const uploadBtn = document.getElementById('upload-btn');
   const uploadText = document.getElementById('upload-text');
   const uploadInput = document.getElementById('audio-upload');
+  const demoSelect = document.getElementById('demo-select');
   const uploadZone = document.getElementById('upload-zone');
   const playBtn = document.getElementById('play-btn');
   const stopBtn = document.getElementById('stop-btn');
@@ -26,6 +27,7 @@
   let audioCtx = null;
   let analyser = null;
   let sourceNode = null;
+  let gainNode = null;
   let audioBuffer = null;
   let isPlaying = false;
   let startTime = 0;
@@ -46,6 +48,7 @@
   const gridIndicator = document.getElementById('grid-toggle-indicator');
   const speedRadios = document.querySelectorAll('input[name="speed"]');
   const speedIndicator = document.getElementById('speed-toggle-indicator');
+  const volumeInput = document.getElementById('volume-input');
 
   // ── Color Map (exact palette from reference) ──────────────
   // Maps byte value 0-255 to RGB using the reference's colorPalette
@@ -132,7 +135,39 @@
 
   uploadInput.addEventListener('change', (e) => {
     if (e.target.files.length > 0) {
+      demoSelect.value = ""; // Reset demo dropdown if file uploaded
       handleFile(e.target.files[0]);
+    }
+  });
+
+  demoSelect.addEventListener('change', async (e) => {
+    const url = e.target.value;
+    if (!url) return;
+
+    stopPlayback();
+
+    if (!audioCtx) {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+
+    uploadText.textContent = "Loading demo...";
+    uploadBtn.classList.remove('has-file');
+
+    try {
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch ${url}: HTTP ${response.status}`);
+      }
+      const arrayBuffer = await response.arrayBuffer();
+
+      const fileName = demoSelect.options[demoSelect.selectedIndex].text;
+      uploadText.textContent = fileName;
+      uploadBtn.classList.add('has-file');
+
+      await processArrayBuffer(arrayBuffer);
+    } catch (err) {
+      uploadText.textContent = 'Error loading demo';
+      console.error("Demo load error:", err);
     }
   });
 
@@ -148,6 +183,16 @@
 
     try {
       const arrayBuffer = await file.arrayBuffer();
+      await processArrayBuffer(arrayBuffer);
+    } catch (err) {
+      uploadText.textContent = 'Error reading file';
+      uploadBtn.classList.remove('has-file');
+      console.error(err);
+    }
+  }
+
+  async function processArrayBuffer(arrayBuffer) {
+    try {
       audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
 
       playBtn.disabled = false;
@@ -157,11 +202,11 @@
       canvasWrapper.classList.remove('hidden');
 
       resizeCanvases();
-      clearSpectrogram();
+      // Spectrogram is not cleared here anymore so it continues continuously across tracks
       drawAxes();
       updateTimeDisplay(0, audioBuffer.duration);
     } catch (err) {
-      uploadText.textContent = 'Error decoding file';
+      uploadText.textContent = 'Error decoding audio';
       uploadBtn.classList.remove('has-file');
       console.error(err);
     }
@@ -195,8 +240,15 @@
 
     sourceNode = audioCtx.createBufferSource();
     sourceNode.buffer = audioBuffer;
+
+    if (!gainNode) {
+      gainNode = audioCtx.createGain();
+      gainNode.gain.value = parseFloat(volumeInput.value);
+    }
+
     sourceNode.connect(analyser);
-    analyser.connect(audioCtx.destination);
+    analyser.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
 
     sourceNode.onended = () => {
       if (isPlaying) {
@@ -319,6 +371,13 @@
     });
   });
 
+  // ── Volume Control ────────────────────────────────────────
+  volumeInput.addEventListener('input', (e) => {
+    if (gainNode) {
+      gainNode.gain.value = parseFloat(e.target.value);
+    }
+  });
+
   // ── Hover Tooltip ─────────────────────────────────────────
   spectrogramCanvas.addEventListener('mousemove', (e) => {
     if (!audioCtx) return;
@@ -359,16 +418,24 @@
     // This avoids anti-aliasing artifacts that darken colors
     const plotW = w - AXIS_LEFT;
     const plotH = h - AXIS_BOTTOM;
-    spectrogramCanvas.width = plotW;
-    spectrogramCanvas.height = plotH;
-    spectrogramCanvas.style.width = plotW + 'px';
-    spectrogramCanvas.style.height = plotH + 'px';
+    
+    // Only set width/height if they changed, to prevent implicit canvas clear
+    if (spectrogramCanvas.width !== plotW || spectrogramCanvas.height !== plotH) {
+      // Optional: we could save the image data here to preserve it during resize,
+      // but for track changes the dimensions don't change, so this bypasses the clear.
+      spectrogramCanvas.width = plotW;
+      spectrogramCanvas.height = plotH;
+      spectrogramCanvas.style.width = plotW + 'px';
+      spectrogramCanvas.style.height = plotH + 'px';
+    }
 
     // Axis overlay uses DPR for crisp text
-    axisCanvas.width = w * dpr;
-    axisCanvas.height = h * dpr;
-    axisCanvas.style.width = w + 'px';
-    axisCanvas.style.height = h + 'px';
+    if (axisCanvas.width !== w * dpr || axisCanvas.height !== h * dpr) {
+      axisCanvas.width = w * dpr;
+      axisCanvas.height = h * dpr;
+      axisCanvas.style.width = w + 'px';
+      axisCanvas.style.height = h + 'px';
+    }
   }
 
   window.addEventListener('resize', () => {
