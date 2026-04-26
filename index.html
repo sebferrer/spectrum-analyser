@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Real-time audio spectrum analyzer with spectrogram visualization, frequency graduation, and logarithmic scaling.">
+  <title>Spectrum Analyser</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="index.css">
+</head>
+<body>
+  <div class="app">
+    <header class="header">
+      <div class="header-glow"></div>
+      <h1 class="title">
+        <span class="title-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2v20M2 12h20M4.93 4.93l14.14 14.14M19.07 4.93L4.93 19.07"/>
+          </svg>
+        </span>
+        Spectrum Analyser
+        <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode">
+          <svg class="icon-sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="5"/>
+            <line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+            <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+          </svg>
+          <svg class="icon-moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+          </svg>
+        </button>
+      </h1>
+      <p class="subtitle">Upload an audio file and visualize its frequency content in real time</p>
+    </header>
+
+    <main class="main">
+      <!-- Controls Panel -->
+      <section class="controls-panel" id="controls-panel">
+        <div class="controls-row">
+          <!-- Upload -->
+          <div class="control-group">
+            <label class="control-label" for="audio-upload">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="17 8 12 3 7 8"/>
+                <line x1="12" y1="3" x2="12" y2="15"/>
+              </svg>
+              Audio File
+            </label>
+            <div class="upload-zone" id="upload-zone">
+              <input type="file" id="audio-upload" accept="audio/*" hidden>
+              <button class="upload-btn" id="upload-btn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                  <polyline points="17 8 12 3 7 8"/>
+                  <line x1="12" y1="3" x2="12" y2="15"/>
+                </svg>
+                <span id="upload-text">Choose file or drag &amp; drop</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Scale Toggle -->
+          <div class="control-group">
+            <label class="control-label">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+              </svg>
+              Frequency Scale
+            </label>
+            <div class="scale-toggle" id="scale-toggle">
+              <label class="toggle-option" id="toggle-linear">
+                <input type="radio" name="scale" value="linear" checked>
+                <span class="toggle-label">Linear</span>
+              </label>
+              <label class="toggle-option" id="toggle-log">
+                <input type="radio" name="scale" value="log">
+                <span class="toggle-label">Logarithmic</span>
+              </label>
+              <div class="toggle-indicator" id="toggle-indicator"></div>
+            </div>
+          </div>
+
+          <!-- Playback Controls -->
+          <div class="control-group">
+            <label class="control-label">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="5 3 19 12 5 21 5 3"/>
+              </svg>
+              Playback
+            </label>
+            <div class="playback-controls">
+              <button class="play-btn" id="play-btn" disabled>
+                <svg class="play-icon" id="play-icon" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <polygon points="5 3 19 12 5 21 5 3"/>
+                </svg>
+                <svg class="pause-icon hidden" id="pause-icon" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <rect x="6" y="4" width="4" height="16"/>
+                  <rect x="14" y="4" width="4" height="16"/>
+                </svg>
+              </button>
+              <button class="stop-btn" id="stop-btn" disabled>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                  <rect x="4" y="4" width="16" height="16" rx="2"/>
+                </svg>
+              </button>
+              <span class="time-display" id="time-display">0:00 / 0:00</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Progress bar -->
+        <div class="progress-container hidden" id="progress-container">
+          <div class="progress-bar">
+            <div class="progress-fill" id="progress-fill"></div>
+            <input type="range" class="progress-input" id="progress-input" min="0" max="100" value="0" step="0.1">
+          </div>
+        </div>
+      </section>
+
+      <!-- Visualizer -->
+      <section class="visualizer" id="visualizer">
+        <div class="viz-placeholder" id="viz-placeholder">
+          <div class="viz-placeholder-icon">
+            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" opacity="0.4">
+              <path d="M9 18V5l12-2v13"/>
+              <circle cx="6" cy="18" r="3"/>
+              <circle cx="18" cy="16" r="3"/>
+            </svg>
+          </div>
+          <p class="viz-placeholder-text">Upload an audio file to begin analysis</p>
+          <p class="viz-placeholder-hint">Supports MP3, WAV, OGG, FLAC, and more</p>
+        </div>
+        <div class="canvas-wrapper hidden" id="canvas-wrapper">
+          <canvas id="spectrogram-canvas"></canvas>
+          <canvas id="axis-canvas"></canvas>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <p>Built with Web Audio API &amp; Canvas</p>
+    </footer>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
