@@ -31,11 +31,19 @@
   let startTime = 0;
   let pauseOffset = 0;
   let logScale = false;
+  let showGrid = true;
+  let scrollSpeed = 3; // Default speed
   let animFrameId = null;
 
   const FFT_SIZE = 2048;
   const AXIS_LEFT = 60;
   const AXIS_BOTTOM = 36;
+
+  const tooltip = document.getElementById('hover-tooltip');
+  const gridRadios = document.querySelectorAll('input[name="grid"]');
+  const gridIndicator = document.getElementById('grid-toggle-indicator');
+  const speedRadios = document.querySelectorAll('input[name="speed"]');
+  const speedIndicator = document.getElementById('speed-toggle-indicator');
 
   // ── Color Map (exact palette from reference) ──────────────
   // Maps byte value 0-255 to RGB using the reference's colorPalette
@@ -284,6 +292,53 @@
     });
   });
 
+  // ── Grid Toggle ───────────────────────────────────────────
+  gridRadios.forEach((radio) => {
+    radio.addEventListener('change', () => {
+      showGrid = radio.value === 'on';
+      gridIndicator.classList.toggle('grid-off', !showGrid); 
+      drawAxes();
+    });
+  });
+
+  // ── Speed Toggle ──────────────────────────────────────────
+  speedRadios.forEach((radio) => {
+    radio.addEventListener('change', () => {
+      scrollSpeed = parseInt(radio.value, 10);
+      speedIndicator.classList.remove('speed-1', 'speed-2', 'speed-3');
+      speedIndicator.classList.add(`speed-${scrollSpeed}`);
+    });
+  });
+
+  // ── Hover Tooltip ─────────────────────────────────────────
+  spectrogramCanvas.addEventListener('mousemove', (e) => {
+    if (!audioCtx) return;
+    const rect = spectrogramCanvas.getBoundingClientRect();
+    const y = e.clientY - rect.top;
+    
+    // Make sure we're within bounds
+    if (y < 0 || y > rect.height) {
+      tooltip.classList.add('hidden');
+      return;
+    }
+
+    const nyquist = audioCtx.sampleRate / 2;
+    const freq = yToFreq(y, rect.height, nyquist);
+    
+    let displayFreq = freq >= 1000 
+      ? (freq / 1000).toFixed(1) + ' kHz'
+      : Math.round(freq) + ' Hz';
+
+    tooltip.textContent = displayFreq;
+    tooltip.style.left = (e.clientX - rect.left + AXIS_LEFT) + 'px';
+    tooltip.style.top = y + 'px';
+    tooltip.classList.remove('hidden');
+  });
+
+  spectrogramCanvas.addEventListener('mouseleave', () => {
+    tooltip.classList.add('hidden');
+  });
+
   // ── Canvas Sizing ─────────────────────────────────────────
   function resizeCanvases() {
     const wrapper = canvasWrapper;
@@ -358,10 +413,12 @@
       ctx.fillText(label, AXIS_LEFT - 8, y);
 
       // Grid line
-      ctx.beginPath();
-      ctx.moveTo(AXIS_LEFT, y);
-      ctx.lineTo(AXIS_LEFT + plotW, y);
-      ctx.stroke();
+      if (showGrid) {
+        ctx.beginPath();
+        ctx.moveTo(AXIS_LEFT, y);
+        ctx.lineTo(AXIS_LEFT + plotW, y);
+        ctx.stroke();
+      }
     }
 
     // Axis label
@@ -436,13 +493,13 @@
     const canvasW = spectrogramCanvas.width;
     const canvasH = spectrogramCanvas.height;
 
-    // Scroll left by 1 pixel
-    const imageData = ctx.getImageData(1, 0, canvasW - 1, canvasH);
+    // Scroll left by speed amount
+    const imageData = ctx.getImageData(scrollSpeed, 0, canvasW - scrollSpeed, canvasH);
     ctx.putImageData(imageData, 0, 0);
 
-    // Clear the rightmost column
+    // Clear the rightmost column area
     ctx.fillStyle = getCanvasBg();
-    ctx.fillRect(canvasW - 1, 0, 1, canvasH);
+    ctx.fillRect(canvasW - scrollSpeed, 0, scrollSpeed, canvasH);
 
     // Draw new column
     const nyquist = audioCtx.sampleRate / 2;
@@ -465,7 +522,7 @@
       const b = colorMap[idx * 3 + 2];
 
       ctx.fillStyle = `rgb(${r},${g},${b})`;
-      ctx.fillRect(canvasW - 1, py, 1, 1);
+      ctx.fillRect(canvasW - scrollSpeed, py, scrollSpeed, 1);
     }
   }
 
