@@ -34,6 +34,8 @@
   let showGrid = true;
   let scrollSpeed = 3; // Default speed
   let animFrameId = null;
+  let isScrubbing = false;
+  let wasPlayingBeforeScrubbing = false;
 
   const FFT_SIZE = 2048;
   const AXIS_LEFT = 60;
@@ -256,29 +258,36 @@
     }
   }
 
-  // ── Progress Bar ──────────────────────────────────────────
+  // ── Progress Bar Scrubbing ────────────────────────────────
+  progressInput.addEventListener('pointerdown', () => {
+    if (!audioBuffer) return;
+    isScrubbing = true;
+    wasPlayingBeforeScrubbing = isPlaying;
+    if (isPlaying) {
+      pausePlayback();
+    }
+  });
+
   progressInput.addEventListener('input', (e) => {
     if (!audioBuffer) return;
     const pct = parseFloat(e.target.value);
     const seekTime = (pct / 100) * audioBuffer.duration;
+    
+    // Only update UI while dragging
+    updateTimeDisplay(seekTime, audioBuffer.duration);
+    progressFill.style.width = pct + '%';
+  });
 
-    const wasPlaying = isPlaying;
-    if (isPlaying) {
-      sourceNode.stop();
-      sourceNode.disconnect();
-      isPlaying = false;
-      if (animFrameId) {
-        cancelAnimationFrame(animFrameId);
-        animFrameId = null;
-      }
-    }
+  progressInput.addEventListener('change', (e) => {
+    if (!audioBuffer) return;
+    const pct = parseFloat(e.target.value);
+    pauseOffset = (pct / 100) * audioBuffer.duration;
+    isScrubbing = false;
 
-    pauseOffset = seekTime;
-
-    if (wasPlaying) {
+    if (wasPlayingBeforeScrubbing) {
       startPlayback();
     } else {
-      updateTimeDisplay(seekTime, audioBuffer.duration);
+      updateTimeDisplay(pauseOffset, audioBuffer.duration);
       progressFill.style.width = pct + '%';
     }
   });
@@ -475,13 +484,18 @@
     animFrameId = requestAnimationFrame(drawLoop);
 
     const elapsed = audioCtx.currentTime - startTime;
-    if (elapsed >= audioBuffer.duration) return;
+    if (elapsed >= audioBuffer.duration) {
+      // Allow it to naturally stop
+      return; 
+    }
 
-    // Update time & progress
-    updateTimeDisplay(elapsed, audioBuffer.duration);
-    const pct = (elapsed / audioBuffer.duration) * 100;
-    progressFill.style.width = pct + '%';
-    progressInput.value = pct;
+    // Update time & progress ONLY if not currently scrubbing
+    if (!isScrubbing) {
+      updateTimeDisplay(elapsed, audioBuffer.duration);
+      const pct = (elapsed / audioBuffer.duration) * 100;
+      progressFill.style.width = pct + '%';
+      progressInput.value = pct;
+    }
 
     // Get frequency data
     const bufferLength = analyser.frequencyBinCount;
