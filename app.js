@@ -180,6 +180,11 @@
       uploadText.textContent = fileName;
       uploadBtn.classList.add('has-file');
 
+      if (url === 'sound/white_noise.wav') {
+        volumeInput.value = "0.05";
+        volumeInput.dispatchEvent(new Event('input'));
+      }
+
       await processArrayBuffer(arrayBuffer);
     } catch (err) {
       uploadText.textContent = 'Error loading demo';
@@ -196,6 +201,13 @@
 
     uploadText.textContent = file.name;
     uploadBtn.classList.add('has-file');
+
+    if (file.name.includes('white_noise')) {
+      volumeInput.value = 0.1;
+      if (gainNode) {
+        gainNode.gain.value = 0.1;
+      }
+    }
 
     try {
       const arrayBuffer = await file.arrayBuffer();
