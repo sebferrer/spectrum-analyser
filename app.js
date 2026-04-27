@@ -22,6 +22,8 @@
   const axisCanvas = document.getElementById('axis-canvas');
   const scaleRadios = document.querySelectorAll('input[name="scale"]');
   const themeToggle = document.getElementById('theme-toggle');
+  const stegoSwitch = document.getElementById('stego-switch');
+  const stegoOptions = document.querySelectorAll('.stego-option');
 
   // ── State ─────────────────────────────────────────────────
   let audioCtx = null;
@@ -112,6 +114,20 @@
     html.setAttribute('data-theme', current === 'dark' ? 'light' : 'dark');
     drawAxes();
   });
+
+  if (stegoSwitch) {
+    stegoSwitch.addEventListener('change', (e) => {
+      stegoOptions.forEach(opt => {
+        if (e.target.checked) {
+          opt.removeAttribute('hidden');
+          opt.classList.remove('hidden');
+        } else {
+          opt.setAttribute('hidden', '');
+          opt.classList.add('hidden');
+        }
+      });
+    });
+  }
 
   // ── Upload Handling ───────────────────────────────────────
   uploadBtn.addEventListener('click', () => uploadInput.click());
@@ -418,7 +434,7 @@
     // This avoids anti-aliasing artifacts that darken colors
     const plotW = w - AXIS_LEFT;
     const plotH = h - AXIS_BOTTOM;
-    
+
     // Only set width/height if they changed, to prevent implicit canvas clear
     if (spectrogramCanvas.width !== plotW || spectrogramCanvas.height !== plotH) {
       // Optional: we could save the image data here to preserve it during resize,
@@ -508,11 +524,11 @@
     ctx.restore();
 
     // ── Time axis (bottom) ────
-    ctx.textAlign = 'center';
+    /*ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
     ctx.font = '10px "Inter", sans-serif';
     ctx.fillStyle = getAxisTextColor();
-    ctx.fillText('Time →', AXIS_LEFT + plotW / 2, plotH + 18);
+    ctx.fillText('Time →', AXIS_LEFT + plotW / 2, plotH + 18);*/
 
     // Border
     ctx.strokeStyle = getAxisBorderColor();

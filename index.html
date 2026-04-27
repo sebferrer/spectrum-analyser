@@ -68,12 +68,21 @@
                   <option value="" disabled selected>Or choose a demo...</option>
                   <option value="sound/white_noise.wav">White Noise</option>
                   <option value="sound/white_noise_lowpass.wav">White Noise Lowpass</option>
-                  <option value="sound/pink_noise.wav">Pink Noise</option>
+                  <option value="sound/pink_noise_voss_mccartney.wav">Pink Noise</option>
+                  <option value="sound/pink_noise_voss_mccartney_lowpass.wav">Pink Noise Lowpass</option>
                   <option value="sound/brown_noise.wav">Brown Noise</option>
+                  <option value="sound/secret_message_text.wav" class="stego-option hidden" hidden>Steganography 1</option>
+                  <option value="sound/secret_message_qr.wav" class="stego-option hidden" hidden>Steganography 2</option>
                 </select>
                 <svg class="select-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <polyline points="6 9 12 15 18 9"/>
                 </svg>
+              </div>
+              <div style="display: flex; align-items: center; margin-left: 8px;">
+                <label class="stego-switch-ui" title="Toggle extra options">
+                  <input type="checkbox" id="stego-switch">
+                  <span class="stego-slider"></span>
+                </label>
               </div>
             </div>
           </div>
