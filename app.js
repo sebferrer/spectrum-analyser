@@ -41,6 +41,8 @@
   let isScrubbing = false;
   let wasPlayingBeforeScrubbing = false;
 
+  let audioDuration = 0;
+
   const FFT_SIZE = 2048;
   const AXIS_LEFT = 60;
   const AXIS_BOTTOM = 36;
@@ -221,23 +223,112 @@
 
   async function processArrayBuffer(arrayBuffer) {
     try {
-      audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+      // Try standard decodeAudioData first (works on Chrome, Safari, most Firefox)
+      audioBuffer = await audioCtx.decodeAudioData(arrayBuffer.slice(0));
+    } catch (decodeErr) {
+      console.warn('decodeAudioData failed, trying manual WAV decode:', decodeErr);
 
-      playBtn.disabled = false;
-      stopBtn.disabled = false;
-      progressContainer.classList.remove('hidden');
-      vizPlaceholder.classList.add('hidden');
-      canvasWrapper.classList.remove('hidden');
-
-      resizeCanvases();
-      // Spectrogram is not cleared here anymore so it continues continuously across tracks
-      drawAxes();
-      updateTimeDisplay(0, audioBuffer.duration);
-    } catch (err) {
-      uploadText.textContent = 'Error decoding audio';
-      uploadBtn.classList.remove('has-file');
-      console.error(err);
+      try {
+        // Fallback: manually parse WAV file (handles 32-bit float WAV that Firefox rejects)
+        audioBuffer = decodeWavManually(arrayBuffer, audioCtx);
+      } catch (manualErr) {
+        uploadText.textContent = 'Error decoding audio';
+        uploadBtn.classList.remove('has-file');
+        console.error('Both decodeAudioData and manual WAV decode failed:', manualErr);
+        return;
+      }
     }
+
+    audioDuration = audioBuffer.duration;
+
+    playBtn.disabled = false;
+    stopBtn.disabled = false;
+    progressContainer.classList.remove('hidden');
+    vizPlaceholder.classList.add('hidden');
+    canvasWrapper.classList.remove('hidden');
+
+    resizeCanvases();
+    // Spectrogram is not cleared here anymore so it continues continuously across tracks
+    drawAxes();
+    updateTimeDisplay(0, audioDuration);
+  }
+
+  // ── Manual WAV Decoder (Firefox fallback for 32-bit float WAV) ──
+  function decodeWavManually(arrayBuffer, audioContext) {
+    const view = new DataView(arrayBuffer);
+
+    // Validate RIFF/WAVE header
+    const tag = (off) => String.fromCharCode(view.getUint8(off), view.getUint8(off+1), view.getUint8(off+2), view.getUint8(off+3));
+    if (tag(0) !== 'RIFF') throw new Error('Not a RIFF file');
+    if (tag(8) !== 'WAVE') throw new Error('Not a WAVE file');
+
+    // Walk chunks to find 'fmt ' and 'data'
+    let offset = 12;
+    let fmt = null;
+    let dataOffset = 0;
+    let dataSize = 0;
+
+    while (offset < view.byteLength - 8) {
+      const chunkId = tag(offset);
+      const chunkSize = view.getUint32(offset + 4, true);
+
+      if (chunkId === 'fmt ') {
+        fmt = {
+          audioFormat: view.getUint16(offset + 8, true),
+          numChannels: view.getUint16(offset + 10, true),
+          sampleRate:  view.getUint32(offset + 12, true),
+          bitsPerSample: view.getUint16(offset + 22, true),
+        };
+      } else if (chunkId === 'data') {
+        dataOffset = offset + 8;
+        dataSize = chunkSize;
+        // Some WAV files (e.g. from JUCE/streaming) leave data size as 0 or 0xFFFFFFFF
+        if (dataSize === 0 || dataSize === 0xFFFFFFFF) {
+          dataSize = view.byteLength - dataOffset;
+        }
+        break; // stop parsing chunks after data to avoid garbage
+      }
+
+      offset += 8 + chunkSize;
+      if (chunkSize % 2 !== 0) offset++; // word-align
+    }
+
+    if (!fmt) throw new Error('No fmt chunk found');
+    if (!dataOffset) throw new Error('No data chunk found');
+
+    const bytesPerSample = fmt.bitsPerSample / 8;
+    const numSamples = Math.floor(dataSize / (bytesPerSample * fmt.numChannels));
+    const buffer = audioContext.createBuffer(fmt.numChannels, numSamples, fmt.sampleRate);
+
+    for (let ch = 0; ch < fmt.numChannels; ch++) {
+      const channelData = buffer.getChannelData(ch);
+      for (let i = 0; i < numSamples; i++) {
+        const off = dataOffset + (i * fmt.numChannels + ch) * bytesPerSample;
+
+        if (fmt.audioFormat === 3) {
+          // IEEE 754 float (32-bit or 64-bit)
+          channelData[i] = fmt.bitsPerSample === 64
+            ? view.getFloat64(off, true)
+            : view.getFloat32(off, true);
+        } else if (fmt.audioFormat === 1) {
+          // PCM integer
+          if (fmt.bitsPerSample === 8) {
+            channelData[i] = (view.getUint8(off) - 128) / 128;
+          } else if (fmt.bitsPerSample === 16) {
+            channelData[i] = view.getInt16(off, true) / 32768;
+          } else if (fmt.bitsPerSample === 24) {
+            const s = view.getUint8(off) | (view.getUint8(off+1) << 8) | (view.getInt8(off+2) << 16);
+            channelData[i] = s / 8388608;
+          } else if (fmt.bitsPerSample === 32) {
+            channelData[i] = view.getInt32(off, true) / 2147483648;
+          }
+        } else {
+          throw new Error('Unsupported WAV format: ' + fmt.audioFormat);
+        }
+      }
+    }
+
+    return buffer;
   }
 
   // ── Playback ──────────────────────────────────────────────
@@ -331,8 +422,8 @@
       animFrameId = null;
     }
 
-    if (audioBuffer) {
-      updateTimeDisplay(0, audioBuffer.duration);
+    if (audioDuration) {
+      updateTimeDisplay(0, audioDuration);
       progressFill.style.width = '0%';
       progressInput.value = 0;
     }
@@ -340,7 +431,7 @@
 
   // ── Progress Bar Scrubbing ────────────────────────────────
   progressInput.addEventListener('pointerdown', () => {
-    if (!audioBuffer) return;
+    if (!audioDuration) return;
     isScrubbing = true;
     wasPlayingBeforeScrubbing = isPlaying;
     if (isPlaying) {
@@ -349,25 +440,25 @@
   });
 
   progressInput.addEventListener('input', (e) => {
-    if (!audioBuffer) return;
+    if (!audioDuration) return;
     const pct = parseFloat(e.target.value);
-    const seekTime = (pct / 100) * audioBuffer.duration;
+    const seekTime = (pct / 100) * audioDuration;
 
     // Only update UI while dragging
-    updateTimeDisplay(seekTime, audioBuffer.duration);
+    updateTimeDisplay(seekTime, audioDuration);
     progressFill.style.width = pct + '%';
   });
 
   progressInput.addEventListener('change', (e) => {
-    if (!audioBuffer) return;
+    if (!audioDuration) return;
     const pct = parseFloat(e.target.value);
-    pauseOffset = (pct / 100) * audioBuffer.duration;
+    pauseOffset = (pct / 100) * audioDuration;
     isScrubbing = false;
 
     if (wasPlayingBeforeScrubbing) {
       startPlayback();
     } else {
-      updateTimeDisplay(pauseOffset, audioBuffer.duration);
+      updateTimeDisplay(pauseOffset, audioDuration);
       progressFill.style.width = pct + '%';
     }
   });
@@ -579,15 +670,15 @@
     animFrameId = requestAnimationFrame(drawLoop);
 
     const elapsed = audioCtx.currentTime - startTime;
-    if (elapsed >= audioBuffer.duration) {
+    if (elapsed >= audioDuration) {
       // Allow it to naturally stop
       return;
     }
 
     // Update time & progress ONLY if not currently scrubbing
     if (!isScrubbing) {
-      updateTimeDisplay(elapsed, audioBuffer.duration);
-      const pct = (elapsed / audioBuffer.duration) * 100;
+      updateTimeDisplay(elapsed, audioDuration);
+      const pct = (elapsed / audioDuration) * 100;
       progressFill.style.width = pct + '%';
       progressInput.value = pct;
     }
