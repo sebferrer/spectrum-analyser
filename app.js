@@ -24,6 +24,8 @@
   const themeToggle = document.getElementById('theme-toggle');
   const stegoSwitch = document.getElementById('stego-switch');
   const stegoOptions = document.querySelectorAll('.stego-option');
+  const clearBtn = document.getElementById('clear-btn');
+  const copyBtn = document.getElementById('copy-btn');
 
   // ── State ─────────────────────────────────────────────────
   let audioCtx = null;
@@ -35,7 +37,7 @@
   let startTime = 0;
   let pauseOffset = 0;
   let logScale = false;
-  let showGrid = true;
+  let showGrid = false;
   let scrollSpeed = 3; // Default speed
   let animFrameId = null;
   let isScrubbing = false;
@@ -98,12 +100,16 @@
     return isDark() ? '#050508' : '#0d0d14';
   }
 
+  function getAppBg() {
+    return isDark() ? '#12121a' : '#ffffff';
+  }
+
   function getAxisTextColor() {
     return isDark() ? '#5e5e78' : '#666680';
   }
 
   function getAxisGridColor() {
-    return isDark() ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.07)';
+    return isDark() ? 'rgba(255,255,255,0.5)' : 'rgba(255,255,255,0.4)';
   }
 
   function getAxisBorderColor() {
@@ -258,7 +264,7 @@
     const view = new DataView(arrayBuffer);
 
     // Validate RIFF/WAVE header
-    const tag = (off) => String.fromCharCode(view.getUint8(off), view.getUint8(off+1), view.getUint8(off+2), view.getUint8(off+3));
+    const tag = (off) => String.fromCharCode(view.getUint8(off), view.getUint8(off + 1), view.getUint8(off + 2), view.getUint8(off + 3));
     if (tag(0) !== 'RIFF') throw new Error('Not a RIFF file');
     if (tag(8) !== 'WAVE') throw new Error('Not a WAVE file');
 
@@ -276,7 +282,7 @@
         fmt = {
           audioFormat: view.getUint16(offset + 8, true),
           numChannels: view.getUint16(offset + 10, true),
-          sampleRate:  view.getUint32(offset + 12, true),
+          sampleRate: view.getUint32(offset + 12, true),
           bitsPerSample: view.getUint16(offset + 22, true),
         };
       } else if (chunkId === 'data') {
@@ -317,7 +323,7 @@
           } else if (fmt.bitsPerSample === 16) {
             channelData[i] = view.getInt16(off, true) / 32768;
           } else if (fmt.bitsPerSample === 24) {
-            const s = view.getUint8(off) | (view.getUint8(off+1) << 8) | (view.getInt8(off+2) << 16);
+            const s = view.getUint8(off) | (view.getUint8(off + 1) << 8) | (view.getInt8(off + 2) << 16);
             channelData[i] = s / 8388608;
           } else if (fmt.bitsPerSample === 32) {
             channelData[i] = view.getInt32(off, true) / 2147483648;
@@ -342,6 +348,60 @@
 
   stopBtn.addEventListener('click', () => {
     stopPlayback();
+  });
+
+  clearBtn.addEventListener('click', () => {
+    clearSpectrogram();
+  });
+
+  copyBtn.addEventListener('click', async () => {
+    const dpr = window.devicePixelRatio || 1;
+    const tempCanvas = document.createElement('canvas');
+    tempCanvas.width = axisCanvas.width;
+    tempCanvas.height = axisCanvas.height;
+    const tempCtx = tempCanvas.getContext('2d');
+
+    // 1. Fill background (use the app's secondary background color)
+    tempCtx.fillStyle = getAppBg();
+    tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+
+    // 2. Draw spectrogram
+    // It's offset by AXIS_LEFT in the UI. 
+    // Since spectrogramCanvas is 1:1 logical pixels, we scale it to match tempCanvas (DPR scaled)
+    tempCtx.drawImage(
+      spectrogramCanvas,
+      AXIS_LEFT * dpr, 0,
+      spectrogramCanvas.width * dpr, spectrogramCanvas.height * dpr
+    );
+
+    // 3. Draw axes overlay
+    tempCtx.drawImage(axisCanvas, 0, 0);
+
+    try {
+      tempCanvas.toBlob(async (blob) => {
+        if (!blob) return;
+        const item = new ClipboardItem({ [blob.type]: blob });
+        await navigator.clipboard.write([item]);
+
+        // Visual feedback
+        const originalHtml = copyBtn.innerHTML;
+        copyBtn.innerHTML = `
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+        `;
+        copyBtn.style.color = 'var(--success)';
+        copyBtn.style.borderColor = 'var(--success)';
+
+        setTimeout(() => {
+          copyBtn.innerHTML = originalHtml;
+          copyBtn.style.color = '';
+          copyBtn.style.borderColor = '';
+        }, 1500);
+      });
+    } catch (err) {
+      console.error('Failed to copy image:', err);
+    }
   });
 
   function startPlayback() {
@@ -583,8 +643,8 @@
     const plotW = (w / dpr) - AXIS_LEFT;
     const plotH = (h / dpr) - AXIS_BOTTOM;
 
-    if (!audioCtx) return;
-    const nyquist = audioCtx.sampleRate / 2;
+    // Default nyquist if no audioCtx yet
+    const nyquist = audioCtx ? (audioCtx.sampleRate / 2) : 22050;
 
     // ── Frequency axis (left) ────
     ctx.fillStyle = getAxisTextColor();
@@ -593,17 +653,24 @@
     ctx.textBaseline = 'middle';
 
     const freqTicks = logScale
-      ? [20, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000].filter(f => f <= nyquist)
+      ? [31.25, 62.5, 125, 250, 500, 1000, 2000, 4000, 8000, 16000].filter(f => f <= nyquist)
       : generateLinearTicks(nyquist);
 
     ctx.strokeStyle = getAxisGridColor();
-    ctx.lineWidth = 1;
+    ctx.lineWidth = 1.5;
 
     for (const freq of freqTicks) {
       const y = freqToY(freq, plotH, nyquist);
       if (y < 2 || y > plotH - 2) continue;
 
-      const label = freq >= 1000 ? (freq / 1000) + 'k' : freq + '';
+      let label;
+      if (logScale) {
+        if (freq < 100) label = freq.toFixed(2).replace('.', ',');
+        else if (freq < 1000) label = Math.round(freq).toString();
+        else label = (freq / 1000) + 'k';
+      } else {
+        label = freq >= 1000 ? (freq / 1000) + 'k' : freq + '';
+      }
 
       ctx.fillText(label, AXIS_LEFT - 8, y);
 
@@ -748,4 +815,9 @@
     const s = Math.floor(seconds % 60);
     return m + ':' + (s < 10 ? '0' : '') + s;
   }
+
+  // ── Initialization ────────────────────────────────────────
+  resizeCanvases();
+  clearSpectrogram();
+  drawAxes();
 })();

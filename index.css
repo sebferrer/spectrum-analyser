@@ -27,8 +27,8 @@
 
   --canvas-bg: #0d0d14;
   --axis-text: #666680;
-  --axis-grid: rgba(0, 0, 0, 0.07);
-  --axis-border: rgba(0, 0, 0, 0.12);
+  --axis-grid: rgba(255, 255, 255, 0.4);
+  --axis-border: rgba(255, 255, 255, 0.3);
 
   --shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.06);
   --shadow-md: 0 2px 12px rgba(0, 0, 0, 0.08);
@@ -60,8 +60,8 @@
 
   --canvas-bg: #050508;
   --axis-text: #5e5e78;
-  --axis-grid: rgba(255, 255, 255, 0.05);
-  --axis-border: rgba(255, 255, 255, 0.1);
+  --axis-grid: rgba(255, 255, 255, 0.5);
+  --axis-border: rgba(255, 255, 255, 0.4);
 
   --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
   --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4);
@@ -441,6 +441,26 @@ body {
   border-color: var(--accent-primary);
   color: white;
   box-shadow: var(--shadow-glow);
+}
+
+.clear-btn, .copy-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.clear-btn:hover, .copy-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  border-color: var(--accent-primary);
 }
 
 .time-display {
