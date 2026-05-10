@@ -38,7 +38,11 @@
   let pauseOffset = 0;
   let logScale = false;
   let showGrid = false;
-  let scrollSpeed = 3; // Default speed
+  let scrollSpeed = 3; // Default speed level
+  // Speed map: level -> pixels per frame
+  // Level 1 = current 1 ÷ 2, Level 2 = current 1, Level 3 = current 2, Level 4 = current 3, Level 5 = current 3 × 1.5
+  const SPEED_MAP = { 1: 0.5, 2: 1, 3: 2, 4: 3, 5: 4.5 };
+  let scrollAccumulator = 0;
   let animFrameId = null;
   let isScrubbing = false;
   let wasPlayingBeforeScrubbing = false;
@@ -545,7 +549,7 @@
   speedRadios.forEach((radio) => {
     radio.addEventListener('change', () => {
       scrollSpeed = parseInt(radio.value, 10);
-      speedIndicator.classList.remove('speed-1', 'speed-2', 'speed-3');
+      speedIndicator.classList.remove('speed-1', 'speed-2', 'speed-3', 'speed-4', 'speed-5');
       speedIndicator.classList.add(`speed-${scrollSpeed}`);
     });
   });
@@ -760,13 +764,19 @@
     const canvasW = spectrogramCanvas.width;
     const canvasH = spectrogramCanvas.height;
 
-    // Scroll left by speed amount
-    const imageData = ctx.getImageData(scrollSpeed, 0, canvasW - scrollSpeed, canvasH);
+    // Scroll left by speed amount (supports fractional pixel speeds via accumulator)
+    const pixelsPerFrame = SPEED_MAP[scrollSpeed] || 2;
+    scrollAccumulator += pixelsPerFrame;
+    const scrollPixels = Math.floor(scrollAccumulator);
+    if (scrollPixels < 1) return; // not enough accumulated yet
+    scrollAccumulator -= scrollPixels;
+
+    const imageData = ctx.getImageData(scrollPixels, 0, canvasW - scrollPixels, canvasH);
     ctx.putImageData(imageData, 0, 0);
 
     // Clear the rightmost column area
     ctx.fillStyle = getCanvasBg();
-    ctx.fillRect(canvasW - scrollSpeed, 0, scrollSpeed, canvasH);
+    ctx.fillRect(canvasW - scrollPixels, 0, scrollPixels, canvasH);
 
     // Draw new column
     const nyquist = audioCtx.sampleRate / 2;
@@ -789,7 +799,7 @@
       const b = colorMap[idx * 3 + 2];
 
       ctx.fillStyle = `rgb(${r},${g},${b})`;
-      ctx.fillRect(canvasW - scrollSpeed, py, scrollSpeed, 1);
+      ctx.fillRect(canvasW - scrollPixels, py, scrollPixels, 1);
     }
   }
 

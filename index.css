@@ -397,13 +397,15 @@ body {
 .toggle-indicator.log { transform: translateX(100%); }
 .toggle-indicator.grid-off { transform: translateX(100%); }
 
-/* Speed Toggle (3 options) */
+/* Speed Toggle (5 options) */
 .speed-toggle .toggle-indicator {
-  width: calc(33.333% - 2px);
+  width: calc(20% - 1.2px);
 }
 .toggle-indicator.speed-1 { transform: translateX(0); }
 .toggle-indicator.speed-2 { transform: translateX(100%); }
 .toggle-indicator.speed-3 { transform: translateX(200%); }
+.toggle-indicator.speed-4 { transform: translateX(300%); }
+.toggle-indicator.speed-5 { transform: translateX(400%); }
 
 .playback-controls {
   display: flex;
