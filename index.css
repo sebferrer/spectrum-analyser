@@ -405,20 +405,41 @@ body {
   overflow: visible;
 }
 .speed-toggle {
-  flex-direction: column;
+  display: flex !important;
+  flex-direction: column !important;
+  height: 64px !important;
+  box-sizing: border-box !important;
 }
 .speed-row {
-  display: flex;
-  flex-direction: row;
-  width: 100%;
+  display: flex !important;
+  flex-direction: row !important;
+  width: 100% !important;
+  height: 50% !important;
 }
 .speed-row .toggle-option {
-  flex: 1;
-  justify-content: center;
+  flex: 1 !important;
+  height: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+.speed-toggle .toggle-label {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100% !important;
+  height: 100% !important;
+  padding: 0 !important;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  border-radius: 7px;
+  transition: color var(--transition-fast);
+  white-space: nowrap;
 }
 .speed-toggle .toggle-indicator {
-  width: calc(20% - 1.2px);
-  height: calc(50% - 3px);
+  width: calc(20% - 1.2px) !important;
+  height: calc(50% - 3px) !important;
 }
 .toggle-indicator.speed-1 { transform: translate(0, 0); }
 .toggle-indicator.speed-2 { transform: translate(100%, 0); }

@@ -559,13 +559,30 @@
   speedRadios.forEach((radio) => {
     radio.addEventListener('change', () => {
       scrollSpeed = parseInt(radio.value, 10);
-      speedIndicator.classList.remove(
-        'speed-1', 'speed-2', 'speed-3', 'speed-4', 'speed-5',
-        'speed-6', 'speed-7', 'speed-8', 'speed-9', 'speed-10'
-      );
-      speedIndicator.classList.add(`speed-${scrollSpeed}`);
+      speedIndicator.className = `toggle-indicator speed-indicator speed-${scrollSpeed}`;
     });
   });
+
+  // ── Defensive Sync on Load ────────────────────────────────
+  // Ensures that if the browser restores form state on refresh,
+  // the Javascript state and indicators match the checked elements perfectly.
+  const checkedScale = document.querySelector('input[name="scale"]:checked');
+  if (checkedScale) {
+    logScale = checkedScale.value === 'log';
+    toggleIndicator.classList.toggle('log', logScale);
+  }
+
+  const checkedGrid = document.querySelector('input[name="grid"]:checked');
+  if (checkedGrid) {
+    showGrid = checkedGrid.value === 'on';
+    gridIndicator.classList.toggle('grid-off', !showGrid);
+  }
+
+  const checkedSpeed = document.querySelector('input[name="speed"]:checked');
+  if (checkedSpeed) {
+    scrollSpeed = parseInt(checkedSpeed.value, 10);
+    speedIndicator.className = `toggle-indicator speed-indicator speed-${scrollSpeed}`;
+  }
 
   // ── Volume Control ────────────────────────────────────────
   volumeInput.addEventListener('input', (e) => {
