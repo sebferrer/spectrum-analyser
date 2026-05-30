@@ -405,20 +405,16 @@ body {
   overflow: visible;
 }
 .speed-toggle {
-  display: grid !important;
-  grid-template-columns: repeat(5, 1fr);
-  grid-template-rows: repeat(2, 1fr);
-  gap: 0;
-  width: 100%;
-  min-width: 220px;
+  flex-direction: column;
 }
-.speed-toggle .toggle-option {
+.speed-row {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+}
+.speed-row .toggle-option {
+  flex: 1;
   justify-content: center;
-}
-.speed-toggle .toggle-label {
-  padding: 6px 0;
-  width: 100%;
-  text-align: center;
 }
 .speed-toggle .toggle-indicator {
   width: calc(20% - 1.2px);
