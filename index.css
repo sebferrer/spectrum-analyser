@@ -397,15 +397,43 @@ body {
 .toggle-indicator.log { transform: translateX(100%); }
 .toggle-indicator.grid-off { transform: translateX(100%); }
 
-/* Speed Toggle (5 options) */
+/* Speed Toggle (10 options in 2x5 grid) */
+.speed-control-group {
+  /* Fix height to match a single-row toggle so the 2nd row overflows
+     into the natural gap without pushing other controls down */
+  height: 62px;       /* label (~16px) + gap (8px) + single toggle row (~38px) */
+  overflow: visible;
+}
+.speed-toggle {
+  display: grid !important;
+  grid-template-columns: repeat(5, 1fr);
+  grid-template-rows: repeat(2, 1fr);
+  gap: 0;
+  width: 100%;
+  min-width: 220px;
+}
+.speed-toggle .toggle-option {
+  justify-content: center;
+}
+.speed-toggle .toggle-label {
+  padding: 6px 0;
+  width: 100%;
+  text-align: center;
+}
 .speed-toggle .toggle-indicator {
   width: calc(20% - 1.2px);
+  height: calc(50% - 3px);
 }
-.toggle-indicator.speed-1 { transform: translateX(0); }
-.toggle-indicator.speed-2 { transform: translateX(100%); }
-.toggle-indicator.speed-3 { transform: translateX(200%); }
-.toggle-indicator.speed-4 { transform: translateX(300%); }
-.toggle-indicator.speed-5 { transform: translateX(400%); }
+.toggle-indicator.speed-1 { transform: translate(0, 0); }
+.toggle-indicator.speed-2 { transform: translate(100%, 0); }
+.toggle-indicator.speed-3 { transform: translate(200%, 0); }
+.toggle-indicator.speed-4 { transform: translate(300%, 0); }
+.toggle-indicator.speed-5 { transform: translate(400%, 0); }
+.toggle-indicator.speed-6 { transform: translate(0, 100%); }
+.toggle-indicator.speed-7 { transform: translate(100%, 100%); }
+.toggle-indicator.speed-8 { transform: translate(200%, 100%); }
+.toggle-indicator.speed-9 { transform: translate(300%, 100%); }
+.toggle-indicator.speed-10 { transform: translate(400%, 100%); }
 
 .playback-controls {
   display: flex;

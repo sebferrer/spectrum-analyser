@@ -40,8 +40,18 @@
   let showGrid = false;
   let scrollSpeed = 3; // Default speed level
   // Speed map: level -> pixels per frame
-  // Level 1 = current 1 ÷ 2, Level 2 = current 1, Level 3 = current 2, Level 4 = current 3, Level 5 = current 3 × 1.5
-  const SPEED_MAP = { 1: 0.5, 2: 1, 3: 2, 4: 3, 5: 4.5 };
+  const SPEED_MAP = {
+    1: 0.5,
+    2: 1,
+    3: 2,
+    4: 3,
+    5: 4.5,
+    6: 6.0,
+    7: 8.0,
+    8: 10.0,
+    9: 13.0,
+    10: 16.0
+  };
   let scrollAccumulator = 0;
   let animFrameId = null;
   let isScrubbing = false;
@@ -549,7 +559,10 @@
   speedRadios.forEach((radio) => {
     radio.addEventListener('change', () => {
       scrollSpeed = parseInt(radio.value, 10);
-      speedIndicator.classList.remove('speed-1', 'speed-2', 'speed-3', 'speed-4', 'speed-5');
+      speedIndicator.classList.remove(
+        'speed-1', 'speed-2', 'speed-3', 'speed-4', 'speed-5',
+        'speed-6', 'speed-7', 'speed-8', 'speed-9', 'speed-10'
+      );
       speedIndicator.classList.add(`speed-${scrollSpeed}`);
     });
   });
