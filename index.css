@@ -407,50 +407,30 @@ body {
 .speed-toggle {
   display: flex !important;
   flex-direction: column !important;
-  height: 64px !important;
-  box-sizing: border-box !important;
 }
 .speed-row {
   display: flex !important;
   flex-direction: row !important;
   width: 100% !important;
-  height: 50% !important;
 }
 .speed-row .toggle-option {
   flex: 1 !important;
-  height: 100% !important;
-  display: flex !important;
-  align-items: center !important;
   justify-content: center !important;
-}
-.speed-toggle .toggle-label {
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  width: 100% !important;
-  height: 100% !important;
-  padding: 0 !important;
-  font-size: 0.8125rem;
-  font-weight: 500;
-  color: var(--text-muted);
-  border-radius: 7px;
-  transition: color var(--transition-fast);
-  white-space: nowrap;
 }
 .speed-toggle .toggle-indicator {
   width: calc(20% - 1.2px) !important;
-  height: calc(50% - 3px) !important;
+  height: 28px !important; /* Definite pixel height to fix WebKit dynamic height bug */
 }
 .toggle-indicator.speed-1 { transform: translate(0, 0); }
 .toggle-indicator.speed-2 { transform: translate(100%, 0); }
 .toggle-indicator.speed-3 { transform: translate(200%, 0); }
 .toggle-indicator.speed-4 { transform: translate(300%, 0); }
 .toggle-indicator.speed-5 { transform: translate(400%, 0); }
-.toggle-indicator.speed-6 { transform: translate(0, 100%); }
-.toggle-indicator.speed-7 { transform: translate(100%, 100%); }
-.toggle-indicator.speed-8 { transform: translate(200%, 100%); }
-.toggle-indicator.speed-9 { transform: translate(300%, 100%); }
-.toggle-indicator.speed-10 { transform: translate(400%, 100%); }
+.toggle-indicator.speed-6 { transform: translate(0, 28px); }
+.toggle-indicator.speed-7 { transform: translate(100%, 28px); }
+.toggle-indicator.speed-8 { transform: translate(200%, 28px); }
+.toggle-indicator.speed-9 { transform: translate(300%, 28px); }
+.toggle-indicator.speed-10 { transform: translate(400%, 28px); }
 
 .playback-controls {
   display: flex;
