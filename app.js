@@ -207,6 +207,14 @@
         volumeInput.dispatchEvent(new Event('input'));
       }
 
+      if (url === 'sound/secret_message_text.wav' || url === 'sound/secret_message_qr.wav') {
+        const linearRadio = document.querySelector('input[name="scale"][value="linear"]');
+        if (linearRadio && !linearRadio.checked) {
+          linearRadio.checked = true;
+          linearRadio.dispatchEvent(new Event('change'));
+        }
+      }
+
       await processArrayBuffer(arrayBuffer);
     } catch (err) {
       uploadText.textContent = 'Error loading demo';
